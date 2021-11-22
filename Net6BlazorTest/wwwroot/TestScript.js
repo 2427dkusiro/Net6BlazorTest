@@ -1,7 +1,11 @@
 ﻿// .NET6
 
+/**
+ * Tests Js Call
+ * @param {any} arg 引数。コンソールに書き込まれます。
+ */
 export function Hoge(arg) {
-    Blazor.platform.readInt32Field(arg, 4);
+    console.log(arg);
 }
 
 /**
@@ -13,8 +17,9 @@ export function ByteArrayTest(arg) {
 }
 
 /**
- * @param {number} addr
- * @param {number} length
+ * Tests String Reference
+ * @param {number} addr CLI Stringへのアドレス
+ * @param {number} length 文字列長(UTF-16で)
  */
 export function StringTest(addr, length) {
     const array = new Uint8Array(wasmMemory.buffer);

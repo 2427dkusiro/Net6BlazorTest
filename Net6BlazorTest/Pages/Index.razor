@@ -7,52 +7,40 @@
 <h1>Hello, world!</h1>
 
 <h2>パフォーマンス測定(ふるいによる素数列挙)</h2>
-<button class="btn btn-primary" @onclick="OnClick">実行</button>
-<span>@Result</span>
+<button class="btn btn-primary" @onclick="OnClickPrimeTest">実行</button>
+<span>@PrimeTestResult</span>
+
+<h2>JS呼び出し測定(単純呼び出しのオーバーヘッド)</h2>
+<button class="btn btn-primary" @onclick="OnClickCallTest">実行</button>
+<span>
+    @CallTestResult
+</span>
+
+<h2>JS配列相互運用測定(配列データの転送)</h2>
+<button class="btn btn-primary" @onclick="OnClickArrayTest">実行</button>
+<span>@ArrayTestResult</span>
 
 @code {
-    private string Result { get; set; } = "";
+    private string PrimeTestResult { get; set; } = "";
+    private string CallTestResult { get; set; } = "";
+    private string ArrayTestResult { get; set; } = "";
 
-    private async Task OnClick()
+    private async Task OnClickPrimeTest()
     {
-        var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
-        var module = await runtime.InvokeAsync<IJSUnmarshalledObjectReference>("import", "./TestScript.js");
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-        for (int i = 0; i < 1; i++)
-        {
-            module.InvokeUnmarshalled<long, bool>("Hoge", 1);
-        }
-        watch.Stop();
-        Console.WriteLine(watch.ElapsedMilliseconds);
-        // var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
-
-        // var module = await runtime.InvokeAsync<IJSInProcessObjectReference>("import", "./TestScript.js");
-        // var moduleId = (long)typeof(Microsoft.JSInterop.Implementation.JSObjectReference).GetProperty("Id", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(module);
-        /*
-        var array = Enumerable.Range(1, 1 << 20).Select(x => (byte)x).ToArray();
-
-        int id = 1;
-        JSHelper.InvokeUnmarshalled<int, byte[], object?, object?>("Blazor._internal.receiveByteArray", id, array, null, 0l);
-        string str = "[{\"__byte[]\":" + id.ToString() + "}]";
-        JSHelper.InvokeJS("ByteArrayTest", str, Net6BlazorTest.Pages.JSHelper.JSCallResultType.Default, moduleId);
-        */
-
-        // JSHelper.InvokeUnmarshalled<int, object, object, object>("ByteArrayTest", 123, null, null, moduleId);
-
-        /*
-        string str = "abcde";
-        unsafe
-        {
-            fixed (char* ptr = str)
-            {
-                JSHelper.InvokeUnmarshalled<string, int, object, bool>("StringTest", str, str.Length * 2 + 12, null, moduleId);
-            }
-        }
-        Console.WriteLine(str);
-        */
+        DoPrimeTest();
     }
 
-    private async Task DoCallTest()
+    private async Task OnClickCallTest()
+    {
+        await DoUnmarshalTest();
+    }
+
+    private async Task OnClickArrayTest()
+    {
+        await DoArrayTest();
+    }
+
+    private async Task DoArrayTest()
     {
         var module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./TestScript.js");
         var array = Enumerable.Range(1, 1 << 20).Select(x => (byte)x).ToArray();
@@ -65,12 +53,45 @@
             stopwatch.Stop();
             list.Add(stopwatch.Elapsed);
         }
-        Result = ($"arg-size={array.Length},ave:{list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max().TotalMilliseconds}ms");
+        ArrayTestResult = ($"arg-size={array.Length},ave:{list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max().TotalMilliseconds}ms");
+    }
+
+    private async Task DoUnmarshalTest()
+    {
+        const int callTestSize = 1 << 12;
+
+        var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
+        var module = await runtime.InvokeAsync<IJSUnmarshalledObjectReference>("import", "./TestScript.js");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < callTestSize; i++)
+        {
+            module.InvokeUnmarshalled<int, bool>("Hoge", i);
+        }
+        watch.Stop();
+        var unmarshalled = watch.ElapsedMilliseconds;
+
+        watch = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < callTestSize; i++)
+        {
+            module.InvokeVoid("Hoge", i);
+        }
+        watch.Stop();
+        var inProcess = watch.ElapsedMilliseconds;
+
+        watch = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < callTestSize; i++)
+        {
+            await module.InvokeVoidAsync("Hoge", i);
+        }
+        watch.Stop();
+        var jSRuntime = watch.ElapsedMilliseconds;
+
+        CallTestResult = $"call-count={callTestSize},JSRuntime:{jSRuntime}ms,InProcess:{inProcess}ms,Unmarshal={unmarshalled}ms";
     }
 
     private void DoPrimeTest()
     {
-        Result = "";
+        PrimeTestResult = "";
         List<TimeSpan> list = new();
         int n = (int)Math.Pow(10, 6);
 
@@ -82,7 +103,7 @@
             stopwatch.Stop();
             list.Add(stopwatch.Elapsed);
         }
-        Result = $"n={n},ave={list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max().TotalMilliseconds}ms";
+        PrimeTestResult = $"n={n},ave={list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max().TotalMilliseconds}ms";
     }
 
     // O(NlogN)程度の計算量でN以下の素数を列挙する
@@ -113,4 +134,4 @@
 
         return isPrime.Select((x, i) => (x, i)).Where(tuple => tuple.x).Select(tuple => tuple.i);
     }
-}
+        }

@@ -1,23 +1,32 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
-using System.Reflection;
 
 namespace Net6BlazorTest.Pages
 {
-    public class JSHelper
+    public static class JSHelper
     {
+        private readonly static IntPtr invokeJsFunctionPointer;
+        static JSHelper()
+        {
+            Assembly asm = typeof(Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime).Assembly;
+            var method = asm.GetType("WebAssembly.JSInterop.InternalCalls")?.GetMethod("InvokeJS", BindingFlags.Public | BindingFlags.Static);
+            if (method is null) { throw new InvalidOperationException(); }
+
+            invokeJsFunctionPointer = method.MethodHandle.GetFunctionPointer();
+        }
+
         public static string InvokeJS(string P_0, string P_1, JSCallResultType P_2, long P_3)
         {
-            JSCallInfo jSCallInfo = default(JSCallInfo);
+            JSCallInfo jSCallInfo = default;
             jSCallInfo.FunctionIdentifier = P_0;
             jSCallInfo.TargetInstanceId = P_3;
             jSCallInfo.ResultType = P_2;
             jSCallInfo.MarshalledCallArgsJson = P_1 ?? "[]";
             jSCallInfo.MarshalledCallAsyncHandle = 0L;
             JSCallInfo jSCallInfo2 = jSCallInfo;
-            string text;
-            string result = InvokeJS<object, object, object, string>(out text, ref jSCallInfo2, null, null, null);
+            string? text;
+            string result = InvokeJS<object?, object?, object?, string>(out text, ref jSCallInfo2, null, null, null);
             if (text == null)
             {
                 return result;
@@ -28,18 +37,17 @@ namespace Net6BlazorTest.Pages
         public static TResult InvokeUnmarshalled<T0, T1, T2, TResult>(string P_0, T0 P_1, T1 P_2, T2 P_3, long P_4)
         {
             JSCallResultType jSCallResultType = JSCallResultType.Default;
-            JSCallInfo jSCallInfo = default(JSCallInfo);
+            JSCallInfo jSCallInfo = default;
             jSCallInfo.FunctionIdentifier = P_0;
             jSCallInfo.TargetInstanceId = P_4;
             jSCallInfo.ResultType = jSCallResultType;
             JSCallInfo jSCallInfo2 = jSCallInfo;
-            string text;
             switch (jSCallResultType)
             {
                 case JSCallResultType.Default:
                 case JSCallResultType.JSVoidResult:
                     {
-                        TResult result = InvokeJS<T0, T1, T2, TResult>(out text, ref jSCallInfo2, P_1, P_2, P_3);
+                        TResult result = InvokeJS<T0, T1, T2, TResult>(out string? text, ref jSCallInfo2, P_1, P_2, P_3);
                         if (text == null)
                         {
                             return result;
@@ -81,22 +89,26 @@ namespace Net6BlazorTest.Pages
             }
         }
 
-        public static unsafe TRes InvokeJS<T0, T1, T2, TRes>(out string P_0, ref JSCallInfo P_1, T0 P_2, T1 P_3, T2 P_4)
+        public static unsafe TRes InvokeJS<T0, T1, T2, TRes>(out string? P_0, ref JSCallInfo P_1, T0 P_2, T1 P_3, T2 P_4)
         {
-            Assembly asm = typeof(Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime).Assembly;
-            var method = asm.GetType("WebAssembly.JSInterop.InternalCalls")?.GetMethod("InvokeJS", BindingFlags.Public | BindingFlags.Static)
-                ?.MakeGenericMethod(new[] { typeof(T0), typeof(T1), typeof(T2), typeof(TRes) });
-            if (method is null) { throw new InvalidOperationException(); }
-
-            var type = asm.GetType("WebAssembly.JSInterop.JSCallInfo") ?? throw new InvalidOperationException();
-            var asMethod = typeof(Unsafe).GetMethods().First(x => x.Name == "As" && x.GetGenericArguments().Length == 2)
-                .MakeGenericMethod(new[] { typeof(JSCallInfo), type });
-            var ins = asMethod.Invoke(null, new object[] { P_1 });
-
-            P_0 = default;
-            var res = method.Invoke(null, new object?[] { P_0, ins, P_2, P_3, P_4 });
-            return res is null ? default(TRes) : (TRes)res;
+            delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)invokeJsFunctionPointer;
+            P_0 = null;
+            void* arg0Ptr = Unsafe.AsPointer(ref P_0);
+            void* arg1Ptr = Unsafe.AsPointer(ref P_1);
+            TRes result = del((nint)arg0Ptr, (nint)arg1Ptr, P_2, P_3, P_4);
+            return result;
         }
+
+        /* 生成コストがそこまで重くないっぽい、効果なし?
+        unsafe static class GenericTypeCache<T0, T1, T2, TRes>
+        {
+            public static delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del;
+            static GenericTypeCache()
+            {
+                del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)invokeJsFunctionPointer;
+            }
+        }
+        */
 
         [StructLayout(LayoutKind.Explicit, Pack = 4)]
         public struct JSCallInfo
