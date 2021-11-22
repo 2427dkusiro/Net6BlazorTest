@@ -1,4 +1,6 @@
 ﻿@page "/"
+@using System.Runtime.CompilerServices
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Index</PageTitle>
 
@@ -11,7 +13,62 @@
 @code {
     private string Result { get; set; } = "";
 
-    private void OnClick()
+    private async Task OnClick()
+    {
+        var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
+        var module = await runtime.InvokeAsync<IJSUnmarshalledObjectReference>("import", "./TestScript.js");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < 1; i++)
+        {
+            module.InvokeUnmarshalled<long, bool>("Hoge", 1);
+        }
+        watch.Stop();
+        Console.WriteLine(watch.ElapsedMilliseconds);
+        // var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
+
+        // var module = await runtime.InvokeAsync<IJSInProcessObjectReference>("import", "./TestScript.js");
+        // var moduleId = (long)typeof(Microsoft.JSInterop.Implementation.JSObjectReference).GetProperty("Id", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(module);
+        /*
+        var array = Enumerable.Range(1, 1 << 20).Select(x => (byte)x).ToArray();
+
+        int id = 1;
+        JSHelper.InvokeUnmarshalled<int, byte[], object?, object?>("Blazor._internal.receiveByteArray", id, array, null, 0l);
+        string str = "[{\"__byte[]\":" + id.ToString() + "}]";
+        JSHelper.InvokeJS("ByteArrayTest", str, Net6BlazorTest.Pages.JSHelper.JSCallResultType.Default, moduleId);
+        */
+
+        // JSHelper.InvokeUnmarshalled<int, object, object, object>("ByteArrayTest", 123, null, null, moduleId);
+
+        /*
+        string str = "abcde";
+        unsafe
+        {
+            fixed (char* ptr = str)
+            {
+                JSHelper.InvokeUnmarshalled<string, int, object, bool>("StringTest", str, str.Length * 2 + 12, null, moduleId);
+            }
+        }
+        Console.WriteLine(str);
+        */
+    }
+
+    private async Task DoCallTest()
+    {
+        var module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./TestScript.js");
+        var array = Enumerable.Range(1, 1 << 20).Select(x => (byte)x).ToArray();
+        List<TimeSpan> list = new();
+
+        for (int i = 0; i < 10; i++)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            await module.InvokeVoidAsync("ByteArrayTest", array);
+            stopwatch.Stop();
+            list.Add(stopwatch.Elapsed);
+        }
+        Result = ($"arg-size={array.Length},ave:{list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max().TotalMilliseconds}ms");
+    }
+
+    private void DoPrimeTest()
     {
         Result = "";
         List<TimeSpan> list = new();
@@ -25,7 +82,7 @@
             stopwatch.Stop();
             list.Add(stopwatch.Elapsed);
         }
-        Result = $"n={n},ave={list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max()}";
+        Result = $"n={n},ave={list.Select(x => x.TotalMilliseconds).Average()}ms,max={list.Max().TotalMilliseconds}ms";
     }
 
     // O(NlogN)程度の計算量でN以下の素数を列挙する
