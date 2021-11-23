@@ -20,10 +20,14 @@
 <button class="btn btn-primary" @onclick="OnClickArrayTest">実行</button>
 <span>@ArrayTestResult</span>
 
+<h2>シリアライザ比較(カスタムシリアライザによるJS呼び出し)</h2>
+<button class="btn btn-primary" @onclick="OnClickUTF8JsonTest">実行</button>
+
 @code {
     private string PrimeTestResult { get; set; } = "";
     private string CallTestResult { get; set; } = "";
     private string ArrayTestResult { get; set; } = "";
+    private string UTF8JsonResult { get; set; } = "";
 
     private async Task OnClickPrimeTest()
     {
@@ -38,6 +42,23 @@
     private async Task OnClickArrayTest()
     {
         await DoArrayTest();
+    }
+
+    private async Task OnClickUTF8JsonTest()
+    {
+        await DoUTF8JsonTest();
+    }
+
+    private async Task DoUTF8JsonTest()
+    {
+        const int size = 1 << 10;
+        TestObject[] objects = Enumerable.Range(1, size).Select(x => TestObject.CreateDummy()).ToArray();
+        var module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./TestScript.js")
+            as Microsoft.JSInterop.Implementation.JSObjectReference;
+        var moduleId = module.GetId();
+        Console.WriteLine(moduleId);
+
+        var json = JSHelper.InvokeJSUTF8<TestObject, object>("UTF8JsonTest", objects[0], moduleId);
     }
 
     private async Task DoArrayTest()
@@ -62,7 +83,17 @@
 
         var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
         var module = await runtime.InvokeAsync<IJSUnmarshalledObjectReference>("import", "./TestScript.js");
+        var moduleId = (module as Microsoft.JSInterop.Implementation.JSObjectReference).GetId();
+
         var watch = System.Diagnostics.Stopwatch.StartNew();
+        for (int i = 0; i < callTestSize; i++)
+        {
+            JSHelper.InvokeUnmarshalled<int, object, object, object>("Hoge", i, null, null, moduleId);
+        }
+        watch.Stop();
+        var original = watch.ElapsedMilliseconds;
+
+        watch = System.Diagnostics.Stopwatch.StartNew();
         for (int i = 0; i < callTestSize; i++)
         {
             module.InvokeUnmarshalled<int, bool>("Hoge", i);
@@ -86,7 +117,7 @@
         watch.Stop();
         var jSRuntime = watch.ElapsedMilliseconds;
 
-        CallTestResult = $"call-count={callTestSize},JSRuntime:{jSRuntime}ms,InProcess:{inProcess}ms,Unmarshal={unmarshalled}ms";
+        CallTestResult = $"call-count={callTestSize},JSRuntime:{jSRuntime}ms,InProcess:{inProcess}ms,Unmarshal={unmarshalled}ms,Original={original}ms";
     }
 
     private void DoPrimeTest()
@@ -134,4 +165,4 @@
 
         return isPrime.Select((x, i) => (x, i)).Where(tuple => tuple.x).Select(tuple => tuple.i);
     }
-        }
+}

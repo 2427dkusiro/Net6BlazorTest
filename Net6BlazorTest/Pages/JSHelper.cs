@@ -2,18 +2,45 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+using Microsoft.JSInterop;
+
+using Utf8Json;
+using Utf8Json.Resolvers;
+
 namespace Net6BlazorTest.Pages
 {
     public static class JSHelper
     {
-        private readonly static IntPtr invokeJsFunctionPointer;
+        private readonly static MethodInfo baseMethodInfo;
+        private readonly static Func<Microsoft.JSInterop.Implementation.JSObjectReference, long> getId;
+
         static JSHelper()
         {
             Assembly asm = typeof(Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime).Assembly;
             var method = asm.GetType("WebAssembly.JSInterop.InternalCalls")?.GetMethod("InvokeJS", BindingFlags.Public | BindingFlags.Static);
             if (method is null) { throw new InvalidOperationException(); }
+            baseMethodInfo = method;
 
-            invokeJsFunctionPointer = method.MethodHandle.GetFunctionPointer();
+            var idProp = typeof(Microsoft.JSInterop.Implementation.JSObjectReference).GetProperty("Id", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (idProp is null) { throw new InvalidOperationException(); }
+
+            var func = (Func<Microsoft.JSInterop.Implementation.JSObjectReference, long>)Delegate.CreateDelegate(typeof(Func<Microsoft.JSInterop.Implementation.JSObjectReference, long>), idProp.GetMethod);
+            getId = func;
+        }
+
+        public static long GetId(this Microsoft.JSInterop.Implementation.JSObjectReference jSObjectReference)
+        {
+            return getId.Invoke(jSObjectReference);
+        }
+
+        private const string sendArrayMethod = "Blazor._internal.receiveByteArray";
+        private static int id = 0;
+
+        public unsafe static TResult InvokeJSUTF8<TArg, TResult>(string method, TArg arg0, long objId = 0l)
+        {
+            JsonSerializer.SetDefaultResolver(StandardResolver.AllowPrivateCamelCase);
+            byte[] json = JsonSerializer.Serialize<TArg>(arg0);
+            return InvokeUnmarshalled<byte[], object?, object?, TResult>(method, json, null, null, objId);
         }
 
         public static string InvokeJS(string P_0, string P_1, JSCallResultType P_2, long P_3)
@@ -58,25 +85,25 @@ namespace Net6BlazorTest.Pages
                     {
                         throw new NotSupportedException();
                         /*
-						int num = InvokeJS<T0, T1, T2, int>(out text, ref jSCallInfo2, P_1, P_2, P_3);
-						if (text == null)
-						{
-							return (TResult)(object)new WebAssemblyJSObjectReference(this, num);
-						}
-						throw new Exception(text);
-						*/
+                        int num = InvokeJS<T0, T1, T2, int>(out text, ref jSCallInfo2, P_1, P_2, P_3);
+                        if (text == null)
+                        {
+                            return (TResult)(object)new WebAssemblyJSObjectReference(this, num);
+                        }
+                        throw new Exception(text);
+                        */
                     }
                 case JSCallResultType.JSStreamReference:
                     {
                         throw new NotSupportedException();
                         /*
-						string text2 = InvokeJS<T0, T1, T2, string>(out text, ref jSCallInfo2, P_1, P_2, P_3);
-						if (text == null)
-						{
-							return (TResult)DeserializeJSStreamReference(text2);
-						}
-						throw new Exception(text);
-						*/
+                        string text2 = InvokeJS<T0, T1, T2, string>(out text, ref jSCallInfo2, P_1, P_2, P_3);
+                        if (text == null)
+                        {
+                            return (TResult)DeserializeJSStreamReference(text2);
+                        }
+                        throw new Exception(text);
+                        */
                     }
                 default:
                     {
@@ -91,7 +118,7 @@ namespace Net6BlazorTest.Pages
 
         public static unsafe TRes InvokeJS<T0, T1, T2, TRes>(out string? P_0, ref JSCallInfo P_1, T0 P_2, T1 P_3, T2 P_4)
         {
-            delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)invokeJsFunctionPointer;
+            var del = GenericTypeCache<T0, T1, T2, TRes>.del;
             P_0 = null;
             void* arg0Ptr = Unsafe.AsPointer(ref P_0);
             void* arg1Ptr = Unsafe.AsPointer(ref P_1);
@@ -99,16 +126,15 @@ namespace Net6BlazorTest.Pages
             return result;
         }
 
-        /* 生成コストがそこまで重くないっぽい、効果なし?
-        unsafe static class GenericTypeCache<T0, T1, T2, TRes>
+        public static unsafe class GenericTypeCache<T0, T1, T2, TRes>
         {
-            public static delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del;
+            public static readonly delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del;
             static GenericTypeCache()
             {
-                del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)invokeJsFunctionPointer;
+                del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)baseMethodInfo.MakeGenericMethod(typeof(T0), typeof(T1), typeof(T2), typeof(TRes))
+                    .MethodHandle.GetFunctionPointer();
             }
         }
-        */
 
         [StructLayout(LayoutKind.Explicit, Pack = 4)]
         public struct JSCallInfo

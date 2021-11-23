@@ -16,6 +16,10 @@ export function ByteArrayTest(arg) {
     console.log(arg);
 }
 
+export function UTF8JsonTest(arg) {
+    console.log(arg);
+}
+
 /**
  * Tests String Reference
  * @param {number} addr CLI Stringへのアドレス
