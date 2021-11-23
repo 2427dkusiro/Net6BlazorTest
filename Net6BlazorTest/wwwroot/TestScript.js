@@ -18,6 +18,8 @@ export function ByteArrayTest(arg) {
 
 export function UTF8JsonTest(arg) {
     console.log(arg);
+    const array = new Uint8Array(wasmMemory.buffer);
+    const decode = new TextDecoder();
 }
 
 /**

@@ -56,7 +56,6 @@
         var module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./TestScript.js")
             as Microsoft.JSInterop.Implementation.JSObjectReference;
         var moduleId = module.GetId();
-        Console.WriteLine(moduleId);
 
         var json = JSHelper.InvokeJSUTF8<TestObject, object>("UTF8JsonTest", objects[0], moduleId);
     }
