@@ -13,20 +13,16 @@ namespace Net6BlazorTest.Pages
 
         static JSHelper()
         {
-            Console.WriteLine("JSHelperコンストラクタ");
             Assembly asm = typeof(Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime).Assembly;
             var method = asm.GetType("WebAssembly.JSInterop.InternalCalls")?.GetMethod("InvokeJS", BindingFlags.Public | BindingFlags.Static);
             if (method is null) { throw new InvalidOperationException(); }
             baseMethodInfo = method;
-            Console.WriteLine("InvokeJS MethodInfo取得");
 
             var idProp = typeof(Microsoft.JSInterop.Implementation.JSObjectReference).GetProperty("Id", BindingFlags.NonPublic | BindingFlags.Instance);
             if (idProp is null) { throw new InvalidOperationException(); }
-            Console.WriteLine("Id Prop取得");
 
             var func = (Func<Microsoft.JSInterop.Implementation.JSObjectReference, long>)Delegate.CreateDelegate(typeof(Func<Microsoft.JSInterop.Implementation.JSObjectReference, long>), idProp.GetMethod);
             getId = func;
-            Console.WriteLine("Id delegate作成");
         }
 
         public static long GetId(this Microsoft.JSInterop.Implementation.JSObjectReference jSObjectReference)
@@ -115,31 +111,35 @@ namespace Net6BlazorTest.Pages
 
         public static unsafe TRes InvokeJS<T0, T1, T2, TRes>(out string? P_0, ref JSCallInfo P_1, T0 P_2, T1 P_3, T2 P_4)
         {
-            Console.WriteLine("低レベルInvokeJS");
             var del = GenericTypeCache<T0, T1, T2, TRes>.del;
-            Console.WriteLine("関数ポインタ取得");
             P_0 = null;
             void* arg0Ptr = Unsafe.AsPointer(ref P_0);
             void* arg1Ptr = Unsafe.AsPointer(ref P_1);
-            Console.WriteLine("引数ポインタ作成");
             TRes result = del((nint)arg0Ptr, (nint)arg1Ptr, P_2, P_3, P_4);
             return result;
         }
 
         public static unsafe class GenericTypeCache<T0, T1, T2, TRes>
         {
-#if false
+#if true
             public static readonly delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del;
-#endif
+#else
             public static readonly Func<IntPtr, IntPtr, T0, T1, T2, TRes> del;
+#endif
             static GenericTypeCache()
             {
-#if false
+#if true
                 Console.WriteLine("関数ポインタ作成開始");
-                del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)baseMethodInfo.MakeGenericMethod(typeof(T0), typeof(T1), typeof(T2), typeof(TRes))
-                    .MethodHandle.GetFunctionPointer();
-#endif
+                var generic = baseMethodInfo.MakeGenericMethod(typeof(T0), typeof(T1), typeof(T2), typeof(TRes));
+                Console.WriteLine("ジェネリックメソッド作成");
+                var ptr = generic.MethodHandle.GetFunctionPointer();
+                Console.WriteLine($"関数アドレス:{ptr}");
+                del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)ptr;
+                Console.WriteLine("関数ポインタ作成完了");
+                    
+#else
                 del = (Func<IntPtr, IntPtr, T0, T1, T2, TRes>)Delegate.CreateDelegate(typeof(Func<IntPtr, IntPtr, T0, T1, T2, TRes>), baseMethodInfo.MakeGenericMethod(typeof(T0), typeof(T1), typeof(T2), typeof(TRes)));
+#endif
             }
         }
 
