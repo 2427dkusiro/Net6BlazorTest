@@ -5,11 +5,18 @@ using static System.Reflection.Emit.OpCodes;
 
 namespace ReflectionService
 {
+    /// <summary>
+    /// JS相互運用のためにリフレクションによる動的型情報を提供します。
+    /// </summary>
     public static class JSInteropReflections
     {
         private readonly static MethodInfo baseMethodInfo;
         private readonly static Module module;
-        public readonly static Func<Microsoft.JSInterop.Implementation.JSObjectReference, long> getId;
+
+        /// <summary>
+        /// <see cref="Microsoft.JSInterop.Implementation.JSObjectReference" /> のIDを取得する関数を取得します。
+        /// </summary>
+        public static Func<Microsoft.JSInterop.Implementation.JSObjectReference, long> GetId { get; }
 
         static JSInteropReflections()
         {
@@ -24,36 +31,53 @@ namespace ReflectionService
             if (idProp is null) { throw new InvalidOperationException(); }
 
             var func = (Func<Microsoft.JSInterop.Implementation.JSObjectReference, long>)Delegate.CreateDelegate(typeof(Func<Microsoft.JSInterop.Implementation.JSObjectReference, long>), idProp.GetMethod);
-            getId = func;
+            GetId = func;
         }
 
+        /// <summary>
+        /// ジェネリック型引数を利用して生成結果をキャッシュします。
+        /// </summary>
+        /// <typeparam name="T0"></typeparam>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <typeparam name="TRes"></typeparam>
         public static unsafe class GenericTypeCache<T0, T1, T2, TRes>
         {
+#if AOT
+            /// <summary>
+            /// JSを実行する関数。
+            /// </summary>
+            public static readonly Func<IntPtr, IntPtr, T0, T1, T2, TRes> del;
+#else
+            /// <summary>
+            /// JSを実行する関数。
+            /// </summary>
             public static readonly delegate*<IntPtr, IntPtr, T0, T1, T2, TRes> del;
-
+#endif
 
             static GenericTypeCache()
             {
 #if AOT
                 var info = baseMethodInfo.MakeGenericMethod(typeof(T0), typeof(T1), typeof(T2), typeof(TRes));
-                del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)LoadFunctionPointer(info);
+                del = MakeFunctionByILEmit(info);
 #else
                 del = (delegate*<IntPtr, IntPtr, T0, T1, T2, TRes>)baseMethodInfo.MakeGenericMethod(typeof(T0), typeof(T1), typeof(T2), typeof(TRes)).MethodHandle.GetFunctionPointer();
 #endif
             }
 
-            private static IntPtr LoadFunctionPointer(MethodInfo target)
+            private static Func<IntPtr, IntPtr, T0, T1, T2, TRes> MakeFunctionByILEmit(MethodInfo target)
             {
-                Console.WriteLine("AOT用 ldftn開始");
-                DynamicMethod dynamicMethod = new("<>Ldftn", typeof(IntPtr), null, module, true);
+                DynamicMethod dynamicMethod = new("<>InvokeJS", typeof(TRes), new[] { typeof(IntPtr), typeof(IntPtr), typeof(T0), typeof(T1), typeof(T2) }, module, true);
                 var ilGen = dynamicMethod.GetILGenerator();
-                ilGen.Emit(Ldftn, target);
+                ilGen.Emit(Ldarg_0);
+                ilGen.Emit(Ldarg_1);
+                ilGen.Emit(Ldarg_2);
+                ilGen.Emit(Ldarg_3);
+                ilGen.Emit(Ldarg_S, 4);
+                ilGen.Emit(Call, target);
                 ilGen.Emit(Ret);
-                var func = dynamicMethod.CreateDelegate<Func<IntPtr>>();
-                Console.WriteLine("ldftn関数作成完了");
-                var ptr = func.Invoke();
-                Console.WriteLine($"fptr={ptr}");
-                return ptr;
+                var func = dynamicMethod.CreateDelegate<Func<IntPtr, IntPtr, T0, T1, T2, TRes>>();
+                return func;
             }
         }
     }

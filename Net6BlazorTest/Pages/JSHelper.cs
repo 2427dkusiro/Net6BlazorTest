@@ -1,5 +1,4 @@
-﻿
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using Utf8Json;
@@ -12,7 +11,7 @@ namespace Net6BlazorTest.Pages
 
         static JSHelper()
         {
-            getId = ReflectionService.JSInteropReflections.getId;
+            getId = ReflectionService.JSInteropReflections.GetId;
         }
 
         public static long GetId(this Microsoft.JSInterop.Implementation.JSObjectReference jSObjectReference)
