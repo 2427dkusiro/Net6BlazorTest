@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 using Utf8Json;
 
-namespace Net6BlazorTest.Pages
+namespace TestImplement
 {
     public static class JSHelper
     {
