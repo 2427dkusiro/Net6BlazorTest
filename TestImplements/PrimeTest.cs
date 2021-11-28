@@ -2,9 +2,12 @@
 {
     public static class PrimeTest
     {
-        public static string RunTest(int n)
+        public static async Task RunPrimeTest(this Tester tester, int powN)
         {
+            var result = tester.CreateNewCondition($"N=10^{powN}");
+
             const int testSampleCount = 10;
+            int n = (int)Math.Pow(10, powN);
             TimeSpan[] array = new TimeSpan[testSampleCount];
 
             for (int i = 0; i < testSampleCount; i++)
@@ -15,7 +18,10 @@
                 stopwatch.Stop();
                 array[i] = stopwatch.Elapsed;
             }
-            return $"n={n},ave={array.Select(x => x.TotalMilliseconds).Average()}ms,max={array.Max().TotalMilliseconds}ms";
+
+            result["min"] = array.Min();
+            result["average"] = TimeSpan.FromMilliseconds(array.Select(x => x.TotalMilliseconds).Average());
+            result["max"] = array.Max();
         }
 
         // O(NlogN)程度の計算量でN以下の素数を列挙する

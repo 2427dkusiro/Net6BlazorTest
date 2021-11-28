@@ -5,13 +5,11 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net6BlazorTest", "Net6BlazorTest\Net6BlazorTest.csproj", "{0AC7CD0D-1090-4AC6-9E71-F18E9F41F996}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net5BlazorTest", "Net5BlazorTest\Net5BlazorTest.csproj", "{C94A42BC-AB03-4109-9462-2E8BE708448B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Net6Console", "Net6Console\Net6Console.csproj", "{0BBD646C-55B4-4C4F-9D30-144DA596959E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReflectionService", "ReflectionService\ReflectionService.csproj", "{70B4FFA9-2904-4477-9992-6016E278732D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReflectionService", "ReflectionService\ReflectionService.csproj", "{70B4FFA9-2904-4477-9992-6016E278732D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestImplement", "TestImplements\TestImplement.csproj", "{D0032BE6-3D5A-4D74-BAC6-D96BD8E03C0C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestImplement", "TestImplements\TestImplement.csproj", "{D0032BE6-3D5A-4D74-BAC6-D96BD8E03C0C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,12 +24,6 @@ Global
 		{0AC7CD0D-1090-4AC6-9E71-F18E9F41F996}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0AC7CD0D-1090-4AC6-9E71-F18E9F41F996}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0AC7CD0D-1090-4AC6-9E71-F18E9F41F996}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C94A42BC-AB03-4109-9462-2E8BE708448B}.AOT|Any CPU.ActiveCfg = Release|Any CPU
-		{C94A42BC-AB03-4109-9462-2E8BE708448B}.AOT|Any CPU.Build.0 = Release|Any CPU
-		{C94A42BC-AB03-4109-9462-2E8BE708448B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C94A42BC-AB03-4109-9462-2E8BE708448B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C94A42BC-AB03-4109-9462-2E8BE708448B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C94A42BC-AB03-4109-9462-2E8BE708448B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0BBD646C-55B4-4C4F-9D30-144DA596959E}.AOT|Any CPU.ActiveCfg = Release|Any CPU
 		{0BBD646C-55B4-4C4F-9D30-144DA596959E}.AOT|Any CPU.Build.0 = Release|Any CPU
 		{0BBD646C-55B4-4C4F-9D30-144DA596959E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

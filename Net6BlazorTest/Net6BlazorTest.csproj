@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ReflectionService\ReflectionService.csproj" />
     <ProjectReference Include="..\TestImplements\TestImplement.csproj" />
   </ItemGroup>
 

@@ -37,15 +37,6 @@
         function Hoge(num) {
             console.log(num);
         }
-
-        async function _fetch(jsName) {
-            var responce = await fetch(jsName);
-            if (responce.ok) {
-                return await responce.text();
-            } else {
-                return "error:" + responce.status;
-            }
-        }
     </script>
 </body>
 

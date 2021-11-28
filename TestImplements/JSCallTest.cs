@@ -2,10 +2,12 @@
 
 namespace TestImplement
 {
-    public static class UnmarshalTest
+    public static class JSCallTest
     {
-        public static async Task<string> RunTest(int size, IJSRuntime JSRuntime)
+        public static async Task RunJSCallTest(this Tester testResult, int size, IJSRuntime JSRuntime)
         {
+            var result = testResult.CreateNewCondition($"N={size}");
+
             var runtime = (Microsoft.JSInterop.WebAssembly.WebAssemblyJSRuntime)JSRuntime;
             var module = await runtime.InvokeAsync<IJSUnmarshalledObjectReference>("import", "./TestScript.js");
             var moduleId = (module as Microsoft.JSInterop.Implementation.JSObjectReference ?? throw new InvalidOperationException()).GetId();
@@ -15,13 +17,39 @@ namespace TestImplement
 
             var module2Id = (int)await (Task<object>)ReflectionService.RuntimeReflections.InvokeJSWithArgs(globalId, "_import", new[] { "./TestScript.js" }, out var error2);
 
-            var watch = System.Diagnostics.Stopwatch.StartNew();
+            System.Diagnostics.Stopwatch watch;
+
+            watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < size; i++)
+            {
+                await module.InvokeVoidAsync("Hoge", i);
+            }
+            watch.Stop();
+            result["async"] = watch.Elapsed;
+
+            watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < size; i++)
+            {
+                module.InvokeVoid("Hoge", i);
+            }
+            watch.Stop();
+            result["InProcess"] = watch.Elapsed;
+
+            watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < size; i++)
+            {
+                module.InvokeUnmarshalled<int, bool>("Hoge", i);
+            }
+            watch.Stop();
+            result["Unmarshalled"] = watch.Elapsed;
+
+            watch = System.Diagnostics.Stopwatch.StartNew();
             for (int i = 0; i < size; i++)
             {
                 JSHelper.InvokeUnmarshalled<int, object?, object?, object>("Hoge", i, null, null, moduleId);
             }
             watch.Stop();
-            var original = watch.ElapsedMilliseconds;
+            result["original"] = watch.Elapsed;
 
             watch = System.Diagnostics.Stopwatch.StartNew();
             var argObj1 = new object[1];
@@ -31,7 +59,7 @@ namespace TestImplement
                 ReflectionService.RuntimeReflections.InvokeJSWithArgs(globalId, "Hoge", argObj1, out _);
             }
             watch.Stop();
-            var workerDirect = watch.ElapsedMilliseconds;
+            result["worker/global"] = watch.Elapsed;
 
             watch = System.Diagnostics.Stopwatch.StartNew();
             var argObj = new object[] { module2Id, "Hoge", 0 };
@@ -41,33 +69,7 @@ namespace TestImplement
                 ReflectionService.RuntimeReflections.InvokeJSWithArgs(globalId, "_invoke", argObj, out _);
             }
             watch.Stop();
-            var workerModule = watch.ElapsedMilliseconds;
-
-            watch = System.Diagnostics.Stopwatch.StartNew();
-            for (int i = 0; i < size; i++)
-            {
-                module.InvokeUnmarshalled<int, bool>("Hoge", i);
-            }
-            watch.Stop();
-            var unmarshalled = watch.ElapsedMilliseconds;
-
-            watch = System.Diagnostics.Stopwatch.StartNew();
-            for (int i = 0; i < size; i++)
-            {
-                module.InvokeVoid("Hoge", i);
-            }
-            watch.Stop();
-            var inProcess = watch.ElapsedMilliseconds;
-
-            watch = System.Diagnostics.Stopwatch.StartNew();
-            for (int i = 0; i < size; i++)
-            {
-                await module.InvokeVoidAsync("Hoge", i);
-            }
-            watch.Stop();
-            var jSRuntime = watch.ElapsedMilliseconds;
-
-            return $"call-count={size},JSRuntime:{jSRuntime}ms,InProcess:{inProcess}ms,Unmarshal={unmarshalled}ms,WorkerDirect={workerDirect}ms,WorkerModule={workerModule}ms,Original={original}ms";
+            result["worker/module"] = watch.Elapsed;
         }
     }
 }

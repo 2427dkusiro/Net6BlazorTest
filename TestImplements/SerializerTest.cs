@@ -4,8 +4,10 @@ namespace TestImplement
 {
     public static class SerializerTest
     {
-        public static async Task<string> RunTest(int size, IJSRuntime jSRuntime)
+        public static async Task RunSerializeTest(this Tester tester, int size, IJSRuntime jSRuntime)
         {
+            var result = tester.CreateNewCondition($"N={size}");
+
             TestObject[] objects = Enumerable.Range(1, size).Select(x => TestObject.CreateDummy()).ToArray();
             var module = await jSRuntime.InvokeAsync<IJSObjectReference>("import", "./TestScript.js")
                 as Microsoft.JSInterop.Implementation.JSObjectReference;
@@ -19,7 +21,7 @@ namespace TestImplement
                 JSHelper.InvokeJSUTF8<TestObject, object>("UTF8JsonTest", obj, resolver, moduleId);
             }
             watch.Stop();
-            var custom = watch.ElapsedMilliseconds;
+            result["utf8json"] = watch.Elapsed;
 
             watch = System.Diagnostics.Stopwatch.StartNew();
             foreach (var obj in objects)
@@ -27,9 +29,7 @@ namespace TestImplement
                 module2.InvokeVoid("JsonTest", obj);
             }
             watch.Stop();
-            var inProcess = watch.ElapsedMilliseconds;
-
-            return $"call-size={size},utf8Json:{custom}ms,InProcess:{inProcess}ms";
+            result["InProcess"] = watch.Elapsed;
         }
     }
 
