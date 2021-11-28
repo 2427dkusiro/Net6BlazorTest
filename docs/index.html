@@ -20,6 +20,33 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
+
+    <script>
+        var _module;
+        async function _import(jsName) {
+            _module = await import(jsName)
+            return 0;
+        };
+
+        function _invoke(number, name, ...args) {
+            if (number == 0) {
+                _module[name](...args);
+            }
+        }
+
+        function Hoge(num) {
+            console.log(num);
+        }
+
+        async function _fetch(jsName) {
+            var responce = await fetch(jsName);
+            if (responce.ok) {
+                return await responce.text();
+            } else {
+                return "error:" + responce.status;
+            }
+        }
+    </script>
 </body>
 
 </html>
