@@ -31,8 +31,16 @@ const nativeDecoder = new TextDecoder();
 export function UTF8JsonTest(arg, len) {
     const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
     const str = len > nativeLen ? nativeDecoder.decode(array) : JSTextDecode(array);
-    // const obj = JSON.parse(str);
-    // console.log(obj.id);
+    const obj = JSON.parse(str);
+    console.log(obj.Id);
+}
+
+/**
+ * 
+ * @param {any} arg
+ */
+export function JsonTest(arg) {
+    console.log(arg.id);
 }
 
 /**
@@ -42,27 +50,5 @@ export function UTF8JsonTest(arg, len) {
  */
 export function BinaryTest(arg, len) {
     const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
-}
-
-/**
- * 
- * @param {any} arg
- */
-export function JsonTest(arg) {
-    // console.log(arg.id);
-}
-
-/**
- * Tests String Reference
- * @param {number} addr CLI Stringへのアドレス
- * @param {number} length 文字列長(UTF-16で)
- */
-export function StringTest(addr, length) {
-    const array = new Uint8Array(wasmMemory.buffer);
-    const slice = array.slice(addr, addr + length);
-
-    const data = slice.slice(12, length);
-    data[0] = 'f';
-    data[2] = 'g';
-    data[4] = 'h';
+    // console.log(array);
 }
