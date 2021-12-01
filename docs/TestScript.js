@@ -50,5 +50,6 @@ export function JsonTest(arg) {
  */
 export function BinaryTest(arg, len) {
     const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
-    // console.log(array);
+    return BINDING.js_typed_array_to_array(array);
+    //mono_wasm_string_from_utf16(str: CharPtr, len: number): MonoString;も多分使える、stringのallocならそっち
 }
