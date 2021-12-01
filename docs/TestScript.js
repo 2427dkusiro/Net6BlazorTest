@@ -1,4 +1,6 @@
-﻿// .NET6
+﻿//@ts-check
+// .NET6
+
 import JSTextDecode from "./TextDecoder.js";
 
 /**
@@ -22,31 +24,32 @@ const nativeLen = 256; // おおよそこれくらいのサイズまではJS実�
 const nativeDecoder = new TextDecoder();
 
 /**
- * @type Uint8Array
- * */
-let array = null;
+ * Parse Json encorded as UTF-8 Text
+ * @param {number} arg 配列オブジェクトのアドレス
+ * @param {any} len 配列長
+ */
+export function UTF8JsonTest(arg, len) {
+    const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    const str = len > nativeLen ? nativeDecoder.decode(array) : JSTextDecode(array);
+    // const obj = JSON.parse(str);
+    // console.log(obj.id);
+}
 
 /**
  * Parse Json encorded as UTF-8 Text
  * @param {number} arg 配列オブジェクトのアドレス
  * @param {any} len 配列長
  */
-export function UTF8JsonTest(arg, len) {
-    if (array == null) {
-        array = new Uint8Array(wasmMemory.buffer);
-    }
-    const target = array.subarray(arg + dotnetArrayOffset, arg + dotnetArrayOffset + len);
-    const str = len > nativeLen ? nativeDecoder.decode(target) : JSTextDecode(target);
-    const obj = JSON.parse(str);
-    console.log(obj.id);
+export function BinaryTest(arg, len) {
+    const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
 }
 
 /**
  * 
- * @param {string} arg
+ * @param {any} arg
  */
 export function JsonTest(arg) {
-    console.log(arg.id);
+    // console.log(arg.id);
 }
 
 /**
