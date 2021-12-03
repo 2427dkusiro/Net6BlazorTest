@@ -25,6 +25,20 @@ namespace TestImplement
             return InvokeUnmarshalled<byte[], int, object?, TResult>(method, json, json.Length, null, objId);
         }
 
+        public static TResult InvokeJSUTF8Unsafe<TArg, TResult>(string method, TArg arg0, IJsonFormatterResolver resolver, long objId = 0l)
+        {
+            var json = JsonSerializer.SerializeUnsafe(arg0, resolver);
+            return InvokeUnmarshalled<nint, int, object?, TResult>(method, json.AsAddress(), json.Count, null, objId);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static nint AsAddress(this in ArraySegment<byte> arraySegment)
+        {
+            var array = arraySegment.Array;
+            void* ptr = *(void**)Unsafe.AsPointer(ref array);
+            return (nint)ptr + arraySegment.Offset;
+        }
+
         public static string InvokeJS(string P_0, string P_1, JSCallResultType P_2, long P_3)
         {
             JSCallInfo jSCallInfo = default;

@@ -36,14 +36,34 @@ namespace Net6BlazorTest.Pages
                 await tester.RunArrayTest(1 << 22, JSRuntime);
             }));
 
-            TestUIs.Add(new TestUI("JS呼び出し時間/シリアライズ", async tester =>
+            TestUIs.Add(new TestUI("JS呼び出し時間/jsonシリアライズ-type1", async tester =>
             {
-                await tester.RunSerializeTest(1, JSRuntime);
-                await tester.RunSerializeTest(1 << 4, JSRuntime);
-                await tester.RunSerializeTest(1 << 6, JSRuntime);
-                await tester.RunSerializeTest(1 << 8, JSRuntime);
-                await tester.RunSerializeTest(1 << 10, JSRuntime);
-                await tester.RunSerializeTest(1 << 12, JSRuntime);
+                await tester.RunSerializeTestType1(1, JSRuntime);
+                await tester.RunSerializeTestType1(1 << 4, JSRuntime);
+                await tester.RunSerializeTestType1(1 << 6, JSRuntime);
+                await tester.RunSerializeTestType1(1 << 8, JSRuntime);
+                await tester.RunSerializeTestType1(1 << 10, JSRuntime);
+                await tester.RunSerializeTestType1(1 << 12, JSRuntime);
+            }));
+
+            TestUIs.Add(new TestUI("JS呼び出し時間/jsonシリアライズ-type2", async tester =>
+            {
+                await tester.RunSerializeTestType2(1, JSRuntime);
+                await tester.RunSerializeTestType2(1 << 4, JSRuntime);
+                await tester.RunSerializeTestType2(1 << 6, JSRuntime);
+                await tester.RunSerializeTestType2(1 << 8, JSRuntime);
+                await tester.RunSerializeTestType2(1 << 10, JSRuntime);
+                await tester.RunSerializeTestType2(1 << 12, JSRuntime);
+            }));
+
+            TestUIs.Add(new TestUI("JS呼び出し時間/Worker想定シリアライズ", async tester =>
+            {
+                await tester.RunWorkerCallTest(1, JSRuntime);
+                await tester.RunWorkerCallTest(1 << 4, JSRuntime);
+                await tester.RunWorkerCallTest(1 << 6, JSRuntime);
+                await tester.RunWorkerCallTest(1 << 8, JSRuntime);
+                await tester.RunWorkerCallTest(1 << 10, JSRuntime);
+                await tester.RunWorkerCallTest(1 << 12, JSRuntime);
             }));
         }
     }
