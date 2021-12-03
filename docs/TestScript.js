@@ -1,4 +1,6 @@
-﻿// .NET6
+﻿//@ts-check
+// .NET6
+
 import JSTextDecode from "./TextDecoder.js";
 
 /**
@@ -22,44 +24,32 @@ const nativeLen = 256; // おおよそこれくらいのサイズまではJS実�
 const nativeDecoder = new TextDecoder();
 
 /**
- * @type Uint8Array
- * */
-let array = null;
-
-/**
  * Parse Json encorded as UTF-8 Text
  * @param {number} arg 配列オブジェクトのアドレス
  * @param {any} len 配列長
  */
 export function UTF8JsonTest(arg, len) {
-    if (array == null) {
-        array = new Uint8Array(wasmMemory.buffer);
-    }
-    const target = array.subarray(arg + dotnetArrayOffset, arg + dotnetArrayOffset + len);
-    const str = len > nativeLen ? nativeDecoder.decode(target) : JSTextDecode(target);
+    const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    const str = len > nativeLen ? nativeDecoder.decode(array) : JSTextDecode(array);
     const obj = JSON.parse(str);
-    console.log(obj.id);
+    console.log(obj.Id);
 }
 
 /**
  * 
- * @param {string} arg
+ * @param {any} arg
  */
 export function JsonTest(arg) {
     console.log(arg.id);
 }
 
 /**
- * Tests String Reference
- * @param {number} addr CLI Stringへのアドレス
- * @param {number} length 文字列長(UTF-16で)
+ * Parse Json encorded as UTF-8 Text
+ * @param {number} arg 配列オブジェクトのアドレス
+ * @param {any} len 配列長
  */
-export function StringTest(addr, length) {
-    const array = new Uint8Array(wasmMemory.buffer);
-    const slice = array.slice(addr, addr + length);
-
-    const data = slice.slice(12, length);
-    data[0] = 'f';
-    data[2] = 'g';
-    data[4] = 'h';
+export function BinaryTest(arg, len) {
+    const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    return BINDING.js_typed_array_to_array(array);
+    //mono_wasm_string_from_utf16(str: CharPtr, len: number): MonoString;も多分使える、stringのallocならそっち
 }
