@@ -53,3 +53,34 @@ export function BinaryTest(arg, len) {
     return BINDING.js_typed_array_to_array(array);
     //mono_wasm_string_from_utf16(str: CharPtr, len: number): MonoString;も多分使える、stringのallocならそっち
 }
+
+
+export function StringTestNative(arg, len) {
+    const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    const str = nativeDecoder.decode(array);
+    console.log(str);
+}
+
+export function StringTestJSDecoder(arg, len) {
+    const array = new Uint8Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    const str = JSTextDecode(array);
+    console.log(str);
+}
+
+export function StringTestJSUTF16(arg, len) {
+    const array = new Uint16Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    let str = "";
+    for (let i = 0; i < array.length; i++) {
+        str += String.fromCharCode(array[i]);
+    }
+    console.log(str);
+}
+
+export function StringTestJSUTF16Unit(arg, len, unit) {
+    const array = new Uint16Array(wasmMemory.buffer, arg + dotnetArrayOffset, len);
+    let str = "";
+    for (let i = 0; i < array.length; i += unit) {
+        str += String.fromCharCode.apply("", array.subarray(i, i + unit));
+    }
+    console.log(str);
+}
