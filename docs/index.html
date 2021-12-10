@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Net6BlazorTest</title>
+    <base href="/Net6BlazorTest/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="Net6BlazorTest.styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">Loading...</div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="_framework/blazor.webassembly.js"></script>
+
+    <script>
+        var _module;
+        async function _import(jsName) {
+            _module = await import(jsName)
+            return 0;
+        };
+
+        function _invoke(number, name, ...args) {
+            if (number == 0) {
+                _module[name](...args);
+            }
+        }
+
+        function Hoge(num) {
+            console.log(num);
+        }
+    </script>
+</body>
+
+</html>
